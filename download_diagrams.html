@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NSTP EMS - Download Diagrams</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .download-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .download-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-success {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #45a049;
+        }
+
+        .info-box {
+            background: #f0f7ff;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .info-box p {
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        .diagram-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .diagram-container.active {
+            display: block;
+        }
+
+        .diagram-container h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            overflow: auto;
+        }
+
+        .diagram-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .diagram-actions button {
+            flex: 1;
+            padding: 10px;
+            font-size: 0.95em;
+        }
+
+        .progress-container {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f0f7ff;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .progress-container.active {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .status-message {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .diagram-list {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .diagram-list h4 {
+            color: #667eea;
+            margin-bottom: 12px;
+        }
+
+        .diagram-list ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .diagram-list li {
+            padding: 10px;
+            background: white;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            border-left: 3px solid #667eea;
+            color: #555;
+        }
+
+        .diagram-list li.done {
+            border-left-color: #4caf50;
+            background: #f1f8f5;
+        }
+
+        .diagram-list li.done::before {
+            content: "✓ ";
+            color: #4caf50;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 10px 15px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        footer {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-top: 40px;
+        }
+
+        footer p {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .button-group {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab-btn {
+                width: 100%;
+            }
+        }
+
+        .success-badge {
+            display: inline-block;
+            background: #4caf50;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>📥 Download System Diagrams</h1>
+            <p>NSTP Enrollment Management System</p>
+            <p style="font-size: 0.95em; color: #999; margin-top: 10px;">Export all diagrams as PNG, PDF, or SVG images</p>
+        </header>
+
+        <!-- Main Download Section -->
+        <div class="download-section">
+            <h2>🎯 Download Options</h2>
+            
+            <div class="info-box">
+                <h3>📌 How to Download</h3>
+                <p><strong>Option 1 (Easiest):</strong> Click "Download All Diagrams as ZIP" to download all 5 diagrams at once</p>
+                <p><strong>Option 2:</strong> Download individual diagrams one by one using the buttons below</p>
+                <p><strong>Option 3:</strong> Download as complete PDF document with all diagrams</p>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="downloadAllDiagrams()">
+                    📦 Download All (ZIP)
+                </button>
+                <button class="btn-success" onclick="downloadAllAsPDF()">
+                    📄 Download as PDF
+                </button>
+                <button class="btn-secondary" onclick="toggleDiagrams()">
+                    👁️ View Individual
+                </button>
+            </div>
+
+            <div class="progress-container" id="progressContainer">
+                <div class="status-message" id="statusMessage">Preparing download...</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%">0%</div>
+                </div>
+                <div class="diagram-list">
+                    <h4>Files to Download:</h4>
+                    <ul>
+                        <li id="list-1">System Architecture Diagram</li>
+                        <li id="list-2">Data Flow Diagram</li>
+                        <li id="list-3">Use Case Diagram</li>
+                        <li id="list-4">Activity Diagram</li>
+                        <li id="list-5">Sequence Diagram</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Individual Diagram Downloads -->
+        <div id="individualDiagrams"></div>
+
+        <!-- Footer -->
+        <footer>
+            <p><strong>System Diagrams Export Tool</strong></p>
+            <p>All diagrams are generated dynamically and ready for download</p>
+            <p style="font-size: 0.9em; color: #999; margin-top: 15px;">
+                💡 Tip: Use the ZIP download for fastest processing of all diagrams at once
+            </p>
+        </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    // Diagram definitions
+    const diagrams = [
+        {
+            name: "System Architecture",
+            icon: "🏗️",
+            code: `graph TB
+    Admin["👤 Administrator<br/>System Manager"]
+    Student["👤 Student<br/>Enrollee"]
+    
+    Admin -->|Access| System["🔒 NSTP ENROLLMENT SYSTEM"]
+    Student -->|Access| System
+    
+    System --> Auth["🔐 Authentication<br/>& Authorization"]
+    System --> Enroll["📝 Enrollment<br/>Management"]
+    System --> Manage["📋 Student<br/>Management"]
+    System --> Report["📊 Reports<br/>& Analytics"]
+    
+    Auth -->|Verify| DB["💾 DATA STORAGE"]
+    Enroll -->|Store| DB
+    Manage -->|Store| DB
+    Report -->|Query| DB
+    
+    DB --> Users["👥 User Accounts<br/>& Credentials"]
+    DB --> Students["🎓 Student Enrollment<br/>Information"]
+    
+    Admin -->|View Dashboard| Report
+    Admin -->|Manage Records| Manage
+    
+    Student -->|Register| Auth
+    Student -->|Enroll| Enroll
+    Student -->|View Status| Report
+    
+    style System fill:#4A90E2,stroke:#333,color:#fff
+    style Auth fill:#7ED321,stroke:#333,color:#fff
+    style Enroll fill:#7ED321,stroke:#333,color:#fff
+    style Manage fill:#7ED321,stroke:#333,color:#fff
+    style Report fill:#7ED321,stroke:#333,color:#fff
+    style DB fill:#F5A623,stroke:#333,color:#fff
+    style Users fill:#BD10E0,stroke:#333,color:#fff
+    style Students fill:#BD10E0,stroke:#333,color:#fff`
+        },
+        {
+            name: "Data Flow Diagram",
+            icon: "🔄",
+            code: `graph LR
+    Admin["👤 Admin User<br/>Dashboard & Reports"]
+    Student["👤 Student User<br/>Enrollment & Status"]
+    
+    Admin -->|Request Data| System["🔄 ENROLLMENT SYSTEM<br/>Processing"]
+    Student -->|Request Services| System
+    
+    System -->|Provide Reports| Admin
+    System -->|Provide Status| Student
+    
+    System --> P1["Process 1<br/>Authentication"]
+    System --> P2["Process 2<br/>Enrollment"]
+    System --> P3["Process 3<br/>Management"]
+    System --> P4["Process 4<br/>Reporting"]
+    
+    P1 --> Store1["💾 Data Store 1<br/>User Credentials"]
+    P2 --> Store2["💾 Data Store 2<br/>Student Enrollment"]
+    P3 --> Store2
+    P4 --> Store1
+    P4 --> Store2
+    
+    Store1 -->|Verified Data| System
+    Store2 -->|Student Data| System
+    
+    style System fill:#4A90E2,stroke:#333,color:#fff,stroke-width:3px
+    style Admin fill:#50E3C2,stroke:#333,color:#000
+    style Student fill:#50E3C2,stroke:#333,color:#000
+    style P1 fill:#7ED321,stroke:#333,color:#fff
+    style P2 fill:#7ED321,stroke:#333,color:#fff
+    style P3 fill:#7ED321,stroke:#333,color:#fff
+    style P4 fill:#7ED321,stroke:#333,color:#fff
+    style Store1 fill:#F5A623,stroke:#333,color:#fff
+    style Store2 fill:#F5A623,stroke:#333,color:#fff`
+        },
+        {
+            name: "Use Case Diagram",
+            icon: "👥",
+            code: `graph TB
+    Admin["👤 Administrator<br/>System Manager"]
+    Student["👤 Student<br/>Enrollee"]
+    
+    subgraph System["🎓 NSTP ENROLLMENT SYSTEM"]
+        UC1["🔐 Authenticate User<br/>Login/Register"]
+        UC2["📋 View Dashboard<br/>Statistics & Analytics"]
+        UC3["👥 Manage Student<br/>Records"]
+        UC4["📝 Search & Filter<br/>Students"]
+        UC5["📊 Generate Reports<br/>& Export"]
+        UC6["📋 Enroll in NSTP<br/>Component"]
+        UC7["👁️ View Enrollment<br/>Status"]
+        UC8["👤 Update Personal<br/>Profile"]
+    end
+    
+    Admin -->|Uses| UC1
+    Admin -->|Uses| UC2
+    Admin -->|Uses| UC3
+    Admin -->|Uses| UC4
+    Admin -->|Uses| UC5
+    
+    Student -->|Uses| UC1
+    Student -->|Uses| UC6
+    Student -->|Uses| UC7
+    Student -->|Uses| UC8
+    
+    UC3 -->|Requires| UC4
+    UC5 -->|Requires| UC4
+    UC6 -->|Requires| UC1
+    UC7 -->|Requires| UC1
+    UC8 -->|Requires| UC1
+    
+    style System fill:#E8F4F8,stroke:#333,stroke-width:3px
+    style UC1 fill:#7ED321,stroke:#333,color:#fff
+    style UC2 fill:#7ED321,stroke:#333,color:#fff
+    style UC3 fill:#7ED321,stroke:#333,color:#fff
+    style UC4 fill:#7ED321,stroke:#333,color:#fff
+    style UC5 fill:#7ED321,stroke:#333,color:#fff
+    style UC6 fill:#7ED321,stroke:#333,color:#fff
+    style UC7 fill:#7ED321,stroke:#333,color:#fff
+    style UC8 fill:#7ED321,stroke:#333,color:#fff
+    style Admin fill:#50E3C2,stroke:#333,color:#000
+    style Student fill:#50E3C2,stroke:#333,color:#000`
+        },
+        {
+            name: "Activity Diagram",
+            icon: "⚙️",
+            code: `stateDiagram-v2
+    [*] --> AccessSystem: Student Accesses System
+    
+    AccessSystem --> CheckAccount: Has Account?
+    
+    CheckAccount -->|NO| Registration: Display Registration Page
+    CheckAccount -->|YES| LoginPage: Display Login Page
+    
+    Registration --> EnterReg["Enter:<br/>Name, Email,<br/>Password"]
+    EnterReg --> ValidateReg{Valid<br/>Data?}
+    ValidateReg -->|NO| RegError["Show<br/>Validation<br/>Errors"]
+    RegError --> EnterReg
+    ValidateReg -->|YES| CreateAccount["Create User<br/>Account"]
+    CreateAccount --> LoginPage
+    
+    LoginPage --> EnterCred["Enter Email<br/>& Password"]
+    EnterCred --> AuthCheck{Credentials<br/>Valid?}
+    AuthCheck -->|NO| LoginError["Show<br/>Login<br/>Error"]
+    LoginError --> EnterCred
+    AuthCheck -->|YES| CheckRole{User<br/>Role?}
+    
+    CheckRole -->|ADMIN| AdminDash["Admin Dashboard<br/>• View Students<br/>• Manage Records<br/>• Generate Reports"]
+    AdminDash --> AdminOps["Admin Operations<br/>Search, Filter,<br/>Edit, Delete<br/>Student Records"]
+    AdminOps --> [*]
+    
+    CheckRole -->|STUDENT| EnrollPage["Enrollment Page<br/>Select Component<br/>Fill Personal Info"]
+    EnrollPage --> SelectComponent["Student Selects:<br/>ROTC or CWTS"]
+    SelectComponent --> FillForm["Enter:<br/>Course, Year,<br/>Address, DOB,<br/>Gender, Religion"]
+    FillForm --> ValidateData{All Data<br/>Valid?}
+    ValidateData -->|NO| DataError["Show<br/>Validation<br/>Errors"]
+    DataError --> FillForm
+    ValidateData -->|YES| StoreData["Store Enrollment<br/>in Database"]
+    StoreData --> Confirm["Display<br/>Enrollment<br/>Confirmation"]
+    Confirm --> Success["✓ Successfully<br/>Enrolled<br/>Component: Selected<br/>Status: Active"]
+    Success --> [*]`
+        },
+        {
+            name: "Sequence Diagram",
+            icon: "🔀",
+            code: `sequenceDiagram
+    participant Student as 👤 Student
+    participant UI as 🖥️ UI
+    participant System as 🔄 System
+    participant DB as 💾 Database
+    
+    Student->>UI: Accesses Application
+    UI->>Student: Display Login Page
+    Student->>UI: Enters Credentials
+    
+    UI->>System: Authenticate User
+    System->>DB: Query User
+    DB-->>System: Return User Data
+    
+    alt Credentials Valid
+        System->>DB: Retrieve Role
+        DB-->>System: Return Role
+        System-->>UI: Auth Success
+    else Invalid
+        System-->>UI: Auth Failed
+        UI->>Student: Show Error
+    end
+    
+    alt STUDENT
+        UI->>Student: Show Enrollment
+        Student->>UI: Submit Form
+        UI->>System: Validate Data
+        System->>DB: INSERT Records
+        DB-->>System: Success
+        System-->>UI: Confirmed
+        UI->>Student: Show Success
+    else ADMIN
+        UI->>Student: Show Dashboard
+        Student->>System: Request Data
+        System->>DB: SELECT Students
+        DB-->>System: Return List
+        UI->>Student: Display Stats
+    end
+    
+    Student->>UI: Review Info
+    UI-->>Student: Final Confirmation`
+        }
+    ];
+
+    // Initialize Mermaid
+    mermaid.initialize({ startOnLoad: false, theme: 'default' });
+
+    // Create individual diagram sections
+    function initializeDiagrams() {
+        const container = document.getElementById('individualDiagrams');
+        diagrams.forEach((diagram, index) => {
+            const div = document.createElement('div');
+            div.className = 'diagram-container';
+            div.id = 'diagram-' + (index + 1);
+            const dNum = index + 1;
+            const dName = diagram.name;
+            const dIcon = diagram.icon;
+            const dCode = diagram.code;
+            div.innerHTML = `
+                <h3>` + dIcon + ` ` + dName + `</h3>
+                <div class="mermaid">` + dCode + `</div>
+                <div class="diagram-actions">
+                    <button class="btn-primary" onclick="downloadDiagram(` + dNum + `, '` + dName + `')">
+                        ⬇️ Download PNG
+                    </button>
+                    <button class="btn-secondary" onclick="downloadDiagramSVG(` + dNum + `, '` + dName + `')">
+                        ⬇️ Download SVG
+                    </button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+        mermaid.contentLoaded();
+    }
+
+    function toggleDiagrams() {
+        const containers = document.querySelectorAll('.diagram-container');
+        const allActive = Array.from(containers).every(c => c.classList.contains('active'));
+        containers.forEach(c => c.classList.toggle('active', !allActive));
+    }
+
+    async function downloadDiagram(index, name) {
+        showProgress(`Downloading ${name}...`);
+        const svgElement = document.querySelector(`#diagram-${index} .mermaid svg`);
+        
+        if (!svgElement) {
+            alert('Please wait for the diagram to render first');
+            return;
+        }
+
+        try {
+            const canvas = await html2canvas(svgElement, {
+                backgroundColor: '#ffffff',
+                scale: 2
+            });
+            
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL();
+            link.download = `NSTP_${name.replace(/\s+/g, '_')}.png`;
+            link.click();
+            
+            updateProgress(index);
+            setTimeout(hideProgress, 1000);
+        } catch (e) {
+            alert('Download failed: ' + e.message);
+            hideProgress();
+        }
+    }
+
+    async function downloadDiagramSVG(index, name) {
+        showProgress(`Downloading ${name} (SVG)...`);
+        const svgElement = document.querySelector(`#diagram-${index} .mermaid svg`);
+        
+        if (!svgElement) {
+            alert('Please wait for the diagram to render first');
+            return;
+        }
+
+        try {
+            const svgData = new XMLSerializer().serializeToString(svgElement);
+            const link = document.createElement('a');
+            link.href = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
+            link.download = `NSTP_${name.replace(/\s+/g, '_')}.svg`;
+            link.click();
+            
+            updateProgress(index);
+            setTimeout(hideProgress, 1000);
+        } catch (e) {
+            alert('Download failed: ' + e.message);
+            hideProgress();
+        }
+    }
+
+    async function downloadAllDiagrams() {
+        showProgress('Creating ZIP file with all diagrams...');
+        const zip = new JSZip();
+        
+        try {
+            for (let i = 0; i < diagrams.length; i++) {
+                const diagram = diagrams[i];
+                const svgElement = document.querySelector(`#diagram-${i + 1} .mermaid svg`);
+                
+                if (svgElement) {
+                    const canvas = await html2canvas(svgElement, {
+                        backgroundColor: '#ffffff',
+                        scale: 2
+                    });
+                    
+                    const imageData = canvas.toDataURL('image/png').split(',')[1];
+                    zip.file(`${i + 1}_${diagram.name.replace(/\s+/g, '_')}.png`, imageData, {base64: true});
+                }
+                
+                updateProgress(i + 1);
+            }
+            
+            const zipData = await zip.generateAsync({type: 'blob'});
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(zipData);
+            link.download = 'NSTP_System_Diagrams.zip';
+            link.click();
+            
+            setTimeout(hideProgress, 500);
+        } catch (e) {
+            alert('ZIP creation failed: ' + e.message);
+            hideProgress();
+        }
+    }
+
+    async function downloadAllAsPDF() {
+        showProgress('Creating PDF document...');
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF();
+        
+        try {
+            let pageNum = 1;
+            
+            for (let i = 0; i < diagrams.length; i++) {
+                if (i > 0) pdf.addPage();
+                
+                const diagram = diagrams[i];
+                pdf.setFontSize(16);
+                pdf.text(`${diagram.icon} ${diagram.name}`, 10, 15);
+                
+                const svgElement = document.querySelector(`#diagram-${i + 1} .mermaid svg`);
+                if (svgElement) {
+                    const canvas = await html2canvas(svgElement, {
+                        backgroundColor: '#ffffff',
+                        scale: 2
+                    });
+                    
+                    const imgData = canvas.toDataURL('image/png');
+                    const imgWidth = 190;
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                    
+                    pdf.addImage(imgData, 'PNG', 10, 25, imgWidth, imgHeight);
+                }
+                
+                updateProgress(i + 1);
+            }
+            
+            pdf.save('NSTP_System_Diagrams.pdf');
+            setTimeout(hideProgress, 500);
+        } catch (e) {
+            alert('PDF creation failed: ' + e.message);
+            hideProgress();
+        }
+    }
+
+    function showProgress(message) {
+        const progressContainer = document.getElementById('progressContainer');
+        const statusMessage = document.getElementById('statusMessage');
+        statusMessage.textContent = message;
+        progressContainer.classList.add('active');
+    }
+
+    function updateProgress(current) {
+        const total = diagrams.length;
+        const percent = (current / total) * 100;
+        const progressFill = document.getElementById('progressFill');
+        progressFill.style.width = percent + '%';
+        progressFill.textContent = Math.round(percent) + '%';
+        
+        for (let i = 1; i <= current; i++) {
+            const listItem = document.getElementById(`list-${i}`);
+            if (listItem) listItem.classList.add('done');
+        }
+    }
+
+    function hideProgress() {
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        progressFill.style.width = '0%';
+        progressFill.textContent = '0%';
+        progressContainer.classList.remove('active');
+    }
+
+    // Initialize on load
+    window.addEventListener('load', initializeDiagrams);
+    </script>
+</body>
+</html>

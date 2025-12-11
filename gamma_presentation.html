@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NSTP EMS - Gamma App Presentation</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .presentation {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .slide {
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+            text-align: center;
+            position: relative;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: auto;
+        }
+
+        .slide.active {
+            display: flex;
+        }
+
+        /* Title Slide */
+        .slide-title {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            justify-content: center;
+        }
+
+        .slide-title h1 {
+            font-size: 4em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .slide-title h2 {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .slide-title p {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            opacity: 0.8;
+        }
+
+        /* Content Slides */
+        .slide-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            overflow-y: auto;
+        }
+
+        .slide-content h2 {
+            font-size: 3em;
+            margin-bottom: 40px;
+            color: #667eea;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .slide-content .diagram-wrapper {
+            width: 100%;
+            max-width: 1200px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 400px;
+        }
+
+        .slide-description {
+            margin-top: 30px;
+            font-size: 1.1em;
+            line-height: 1.8;
+            max-width: 1000px;
+            color: #ddd;
+        }
+
+        .slide-description h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .slide-description ul {
+            list-style: none;
+            text-align: left;
+            display: inline-block;
+        }
+
+        .slide-description li {
+            margin-bottom: 12px;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .slide-description li:before {
+            content: "✓";
+            color: #667eea;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+
+        /* Navigation Controls */
+        .controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 50px;
+            background: #667eea;
+            color: white;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:hover {
+            background: #764ba2;
+            transform: scale(1.05);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .slide-counter {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            font-size: 1.2em;
+            color: white;
+            background: rgba(102, 126, 234, 0.3);
+            padding: 12px 20px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+        }
+
+        .progress-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            height: 5px;
+            background: #667eea;
+            transition: width 0.3s ease;
+            z-index: 999;
+        }
+
+        /* Summary Slide */
+        .summary-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            max-width: 1200px;
+            text-align: left;
+        }
+
+        .summary-item {
+            background: rgba(102, 126, 234, 0.2);
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .summary-item h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .summary-item ul {
+            list-style: none;
+        }
+
+        .summary-item li {
+            margin-bottom: 10px;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .summary-item li:before {
+            content: "→";
+            color: #667eea;
+            position: absolute;
+            left: 0;
+        }
+
+        /* End Slide */
+        .slide-end {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .slide-end h1 {
+            font-size: 3.5em;
+            margin-bottom: 30px;
+        }
+
+        .slide-end p {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+
+        /* Keyboard hint */
+        .keyboard-hint {
+            position: fixed;
+            bottom: 120px;
+            right: 30px;
+            font-size: 0.9em;
+            color: #aaa;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 15px;
+            border-radius: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .slide {
+                padding: 30px;
+            }
+
+            .slide-title h1 {
+                font-size: 2.5em;
+            }
+
+            .slide-title h2 {
+                font-size: 1.8em;
+            }
+
+            .slide-content h2 {
+                font-size: 2em;
+            }
+
+            .summary-content {
+                grid-template-columns: 1fr;
+            }
+
+            .controls {
+                bottom: 15px;
+                gap: 10px;
+            }
+
+            button {
+                padding: 10px 15px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation">
+        <!-- Slide 1: Title -->
+        <div class="slide slide-title active">
+            <h1>🎓 NSTP Enrollment</h1>
+            <h2>Management System</h2>
+            <p>Complete System Diagrams & Analysis</p>
+            <p style="margin-top: 60px; font-size: 1.2em;">Digital Platform for Student Enrollment & Administration</p>
+        </div>
+
+        <!-- Slide 2: System Overview -->
+        <div class="slide slide-content">
+            <h2>📋 System Overview</h2>
+            <div class="slide-description">
+                <h3>What is NSTP EMS?</h3>
+                <p style="margin-bottom: 20px;">
+                    A comprehensive digital solution for managing student enrollment in the National Service Training Program (NSTP). 
+                    It streamlines registration, eliminates manual processes, and provides real-time analytics.
+                </p>
+                <h3>Key Benefits:</h3>
+                <ul>
+                    <li>Automated enrollment process with validation</li>
+                    <li>Real-time tracking of student participation</li>
+                    <li>Secure role-based access (Admin & Students)</li>
+                    <li>Comprehensive reporting and analytics</li>
+                    <li>24/7 availability for students and staff</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 3: System Architecture -->
+        <div class="slide slide-content">
+            <h2>🏗️ System Architecture (Level 0)</h2>
+            <div class="diagram-wrapper">
+                <div class="mermaid">
+graph TB
+    Admin["👤 Administrator<br/>System Manager"]
+    Student["👤 Student<br/>Enrollee"]
+    
+    Admin -->|Access| System["🔒 NSTP ENROLLMENT SYSTEM"]
+    Student -->|Access| System
+    
+    System --> Auth["🔐 Authentication<br/>& Authorization"]
+    System --> Enroll["📝 Enrollment<br/>Management"]
+    System --> Manage["📋 Student<br/>Management"]
+    System --> Report["📊 Reports<br/>& Analytics"]
+    
+    Auth -->|Verify| DB["💾 DATA STORAGE"]
+    Enroll -->|Store| DB
+    Manage -->|Store| DB
+    Report -->|Query| DB
+    
+    DB --> Users["👥 User Accounts"]
+    DB --> Students["🎓 Student Info"]
+    
+    Admin -->|View Dashboard| Report
+    Admin -->|Manage Records| Manage
+    
+    Student -->|Register| Auth
+    Student -->|Enroll| Enroll
+    Student -->|View Status| Report
+    
+    style System fill:#4A90E2,stroke:#333,color:#fff
+    style Auth fill:#7ED321,stroke:#333,color:#fff
+    style Enroll fill:#7ED321,stroke:#333,color:#fff
+    style Manage fill:#7ED321,stroke:#333,color:#fff
+    style Report fill:#7ED321,stroke:#333,color:#fff
+    style DB fill:#F5A623,stroke:#333,color:#fff
+                </div>
+            </div>
+            <div class="slide-description">
+                <h3>Shows:</h3>
+                <ul>
+                    <li>Two user types: Administrators and Students</li>
+                    <li>Four core system functions</li>
+                    <li>Centralized data storage</li>
+                    <li>User interactions with modules</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 4: Data Flow Diagram -->
+        <div class="slide slide-content">
+            <h2>🔄 Data Flow Diagram</h2>
+            <div class="diagram-wrapper">
+                <div class="mermaid">
+graph LR
+    Admin["👤 Admin User"]
+    Student["👤 Student User"]
+    
+    Admin -->|Request Data| System["🔄 ENROLLMENT SYSTEM"]
+    Student -->|Request Services| System
+    
+    System -->|Provide Reports| Admin
+    System -->|Provide Status| Student
+    
+    System --> P1["Process 1<br/>Authentication"]
+    System --> P2["Process 2<br/>Enrollment"]
+    System --> P3["Process 3<br/>Management"]
+    System --> P4["Process 4<br/>Reporting"]
+    
+    P1 --> Store1["💾 User Credentials"]
+    P2 --> Store2["💾 Student Enrollment"]
+    P3 --> Store2
+    P4 --> Store1
+    P4 --> Store2
+    
+    style System fill:#4A90E2,stroke:#333,color:#fff
+    style Admin fill:#50E3C2,stroke:#333,color:#000
+    style Student fill:#50E3C2,stroke:#333,color:#000
+    style P1 fill:#7ED321,stroke:#333,color:#fff
+    style P2 fill:#7ED321,stroke:#333,color:#fff
+    style P3 fill:#7ED321,stroke:#333,color:#fff
+    style P4 fill:#7ED321,stroke:#333,color:#fff
+    style Store1 fill:#F5A623,stroke:#333,color:#fff
+    style Store2 fill:#F5A623,stroke:#333,color:#fff
+                </div>
+            </div>
+            <div class="slide-description">
+                <h3>Shows:</h3>
+                <ul>
+                    <li>User inputs and system outputs</li>
+                    <li>Four main system processes</li>
+                    <li>Data persistence and retrieval</li>
+                    <li>Information flow pathways</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 5: Use Case Diagram -->
+        <div class="slide slide-content">
+            <h2>👥 Use Case Diagram</h2>
+            <div class="diagram-wrapper">
+                <div class="mermaid">
+graph TB
+    Admin["👤 Administrator"]
+    Student["👤 Student"]
+    
+    subgraph System["NSTP SYSTEM"]
+        UC1["🔐 Authenticate User"]
+        UC2["📋 View Dashboard"]
+        UC3["👥 Manage Records"]
+        UC4["📝 Search & Filter"]
+        UC5["📊 Generate Reports"]
+        UC6["📋 Enroll in NSTP"]
+        UC7["👁️ View Status"]
+        UC8["👤 Update Profile"]
+    end
+    
+    Admin -->|Uses| UC1
+    Admin -->|Uses| UC2
+    Admin -->|Uses| UC3
+    Admin -->|Uses| UC5
+    
+    Student -->|Uses| UC1
+    Student -->|Uses| UC6
+    Student -->|Uses| UC7
+    Student -->|Uses| UC8
+    
+    UC3 -->|Requires| UC4
+    UC5 -->|Requires| UC4
+    UC6 -->|Requires| UC1
+    
+    style System fill:#E8F4F8,stroke:#333,stroke-width:2px
+    style UC1 fill:#7ED321,stroke:#333,color:#fff
+    style UC2 fill:#7ED321,stroke:#333,color:#fff
+    style UC3 fill:#7ED321,stroke:#333,color:#fff
+    style UC4 fill:#7ED321,stroke:#333,color:#fff
+    style UC5 fill:#7ED321,stroke:#333,color:#fff
+    style UC6 fill:#7ED321,stroke:#333,color:#fff
+    style UC7 fill:#7ED321,stroke:#333,color:#fff
+    style UC8 fill:#7ED321,stroke:#333,color:#fff
+    style Admin fill:#50E3C2,stroke:#333,color:#000
+    style Student fill:#50E3C2,stroke:#333,color:#000
+                </div>
+            </div>
+            <div class="slide-description">
+                <h3>System Capabilities:</h3>
+                <ul>
+                    <li><strong>For Admins:</strong> Dashboard, Records, Reports, Search/Filter</li>
+                    <li><strong>For Students:</strong> Registration, Enrollment, Status, Profile</li>
+                    <li>8 key system functions</li>
+                    <li>Role-based access control</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 6: Activity Diagram -->
+        <div class="slide slide-content">
+            <h2>⚙️ Activity Diagram - Enrollment Flow</h2>
+            <div class="diagram-wrapper">
+                <div class="mermaid">
+stateDiagram-v2
+    [*] --> AccessSystem
+    AccessSystem --> CheckAccount
+    CheckAccount -->|NO| Registration
+    CheckAccount -->|YES| LoginPage
+    Registration --> EnterReg
+    EnterReg --> ValidateReg{Valid?}
+    ValidateReg -->|NO| RegError
+    RegError --> EnterReg
+    ValidateReg -->|YES| CreateAccount
+    CreateAccount --> LoginPage
+    LoginPage --> EnterCred
+    EnterCred --> AuthCheck{Valid?}
+    AuthCheck -->|NO| LoginError
+    LoginError --> EnterCred
+    AuthCheck -->|YES| CheckRole{Admin?}
+    CheckRole -->|YES| AdminDash
+    CheckRole -->|NO| EnrollPage
+    AdminDash --> [*]
+    EnrollPage --> SelectComponent
+    SelectComponent --> FillForm
+    FillForm --> ValidateData{Valid?}
+    ValidateData -->|NO| DataError
+    DataError --> FillForm
+    ValidateData -->|YES| StoreData
+    StoreData --> Success
+    Success --> [*]
+                </div>
+            </div>
+            <div class="slide-description">
+                <h3>Complete Enrollment Journey:</h3>
+                <ul>
+                    <li>Account creation or login</li>
+                    <li>Credential validation</li>
+                    <li>Role-based branching</li>
+                    <li>Form submission and confirmation</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 7: Sequence Diagram -->
+        <div class="slide slide-content">
+            <h2>🔀 Sequence Diagram - User Interactions</h2>
+            <div class="diagram-wrapper">
+                <div class="mermaid">
+sequenceDiagram
+    participant S as Student
+    participant U as UI
+    participant Sys as System
+    participant D as Database
+    
+    S->>U: Access App
+    U->>S: Show Login
+    S->>U: Enter Credentials
+    U->>Sys: Authenticate
+    Sys->>D: Query User
+    D-->>Sys: User Data
+    Sys-->>U: Auth Success
+    U->>S: Show Portal
+    S->>U: Submit Enrollment
+    U->>Sys: Validate Data
+    Sys->>D: INSERT Record
+    D-->>Sys: Confirmed
+    Sys-->>U: Success
+    U->>S: Show Confirmation
+                </div>
+            </div>
+            <div class="slide-description">
+                <h3>Key Interactions:</h3>
+                <ul>
+                    <li>Authentication process</li>
+                    <li>Data validation flow</li>
+                    <li>Database operations</li>
+                    <li>Confirmation feedback</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 8: Key Features -->
+        <div class="slide slide-content">
+            <h2>✨ Key Features & Benefits</h2>
+            <div class="summary-content">
+                <div class="summary-item">
+                    <h3>🔐 Authentication</h3>
+                    <ul>
+                        <li>Secure user registration</li>
+                        <li>Email validation</li>
+                        <li>Password encryption</li>
+                        <li>Role-based access</li>
+                    </ul>
+                </div>
+                <div class="summary-item">
+                    <h3>📝 Enrollment</h3>
+                    <ul>
+                        <li>Digital forms</li>
+                        <li>Component selection</li>
+                        <li>Real-time validation</li>
+                        <li>Instant confirmation</li>
+                    </ul>
+                </div>
+                <div class="summary-item">
+                    <h3>📊 Analytics</h3>
+                    <ul>
+                        <li>Dashboard statistics</li>
+                        <li>Enrollment reports</li>
+                        <li>Trend analysis</li>
+                        <li>Data export</li>
+                    </ul>
+                </div>
+                <div class="summary-item">
+                    <h3>👥 Management</h3>
+                    <ul>
+                        <li>Student database</li>
+                        <li>Search & filter</li>
+                        <li>Profile management</li>
+                        <li>Record updates</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: Problems Solved -->
+        <div class="slide slide-content">
+            <h2>🎯 Problems Solved</h2>
+            <div class="slide-description">
+                <h3>Before vs After:</h3>
+                <p style="margin: 20px 0; text-align: center; font-size: 1.2em;">
+                    <span style="color: #ff6b6b;">❌ Manual paper-based processes</span><br>
+                    <span style="color: #51cf66;">✅ Automated digital enrollment</span>
+                </p>
+                <p style="margin: 20px 0; text-align: center; font-size: 1.2em;">
+                    <span style="color: #ff6b6b;">❌ Lost or damaged records</span><br>
+                    <span style="color: #51cf66;">✅ Secure centralized database</span>
+                </p>
+                <p style="margin: 20px 0; text-align: center; font-size: 1.2em;">
+                    <span style="color: #ff6b6b;">❌ Slow reporting & analytics</span><br>
+                    <span style="color: #51cf66;">✅ Real-time dashboards & reports</span>
+                </p>
+                <p style="margin: 20px 0; text-align: center; font-size: 1.2em;">
+                    <span style="color: #ff6b6b;">❌ Limited accessibility</span><br>
+                    <span style="color: #51cf66;">✅ 24/7 online access</span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Slide 10: Conclusion -->
+        <div class="slide slide-end">
+            <h1>🚀 Ready to Deploy</h1>
+            <p>Complete System Architecture</p>
+            <p style="font-size: 1.2em; margin-top: 40px;">5 Professional Diagrams</p>
+            <p style="font-size: 1.2em;">Full Documentation</p>
+            <p style="font-size: 1.2em;">Comprehensive Analysis</p>
+            <p style="margin-top: 60px; font-size: 1.1em; opacity: 0.8;">
+                NSTP Enrollment Management System<br>
+                Version 1.0 | December 2025
+            </p>
+        </div>
+    </div>
+
+    <!-- Navigation Controls -->
+    <div class="controls">
+        <button id="prevBtn" onclick="previousSlide()">← Previous</button>
+        <button id="nextBtn" onclick="nextSlide()">Next →</button>
+    </div>
+
+    <div class="slide-counter">
+        <span id="currentSlide">1</span> / <span id="totalSlides">10</span>
+    </div>
+
+    <div class="progress-bar" id="progressBar"></div>
+
+    <div class="keyboard-hint">
+        ← → Arrow keys to navigate
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+        
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        document.getElementById('totalSlides').textContent = totalSlides;
+
+        function showSlide(n) {
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[n].classList.add('active');
+            
+            document.getElementById('currentSlide').textContent = n + 1;
+            
+            const progress = ((n + 1) / totalSlides) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            
+            document.getElementById('prevBtn').disabled = n === 0;
+            document.getElementById('nextBtn').disabled = n === totalSlides - 1;
+            
+            mermaid.contentLoaded();
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                showSlide(currentSlide);
+            }
+        }
+
+        function previousSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                showSlide(currentSlide);
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextSlide();
+            if (e.key === 'ArrowLeft') previousSlide();
+        });
+
+        // Initialize
+        showSlide(0);
+    </script>
+</body>
+</html>
